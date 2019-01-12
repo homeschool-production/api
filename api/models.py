@@ -169,6 +169,12 @@ class Enseignant(Personne):
     def __str__(self):
         return self.user.username
 
+    @property
+    def classes(self):
+        classesDB = EnseigneAClasse.objects.filter(enseignant=self)
+        classeList = [{'idClasse': enseigneA.classe.idClass, 'nom': enseigneA.classe.nom} for enseigneA in classesDB]
+        return classeList
+
 class Eleve(Personne):
     idEleve = models.AutoField(primary_key=True)
     active = models.BooleanField()
@@ -184,6 +190,12 @@ class Eleve(Personne):
 
     def __str__(self):
         return self.user.username
+
+    @property
+    def classes(self):
+        inscriptions = Inscription.objects.filter(eleve=self)
+        classeList = [{'idClasse': inscription.classe.idClass, 'nom': inscription.classe.nom} for inscription in inscriptions]
+        return classeList
 
 class Etablissement(models.Model):
     nom = models.CharField(max_length=128, primary_key=True)
@@ -232,11 +244,25 @@ class Classe(models.Model):
     groupe = models.ForeignKey(GroupeDeSoutien, on_delete=models.SET_NULL, null=True)
     facebook = models.URLField(blank=True, null=True)
     twitter = models.URLField(blank=True, null=True)
-    logo = models.ImageField()
+    logo = models.ImageField(upload_to="logo/", null=True)
     publier = models.BooleanField()
     tags = models.CharField(max_length=100000, null=True, blank=True)
     matiere = models.CharField(max_length=50, choices=MATIERE_CHOIX, default=BIO)
     niveau = models.CharField(max_length=50, choices=NIVEAU_CHOIX, default=SIX)
+
+    @property
+    def enseignants(self):
+        enseignantAClasses = EnseigneAClasse.objects.filter(classe=self)
+        enseignants = []
+        for enseignantA in enseignantAClasses:
+            enseignants.append({'idEnseignant':enseignantA.enseignant.idEnseignant, 'nom': "{} {}".format(enseignantA.enseignant.nom, enseignantA.enseignant.prenom)})
+        return enseignants
+
+    @property
+    def eleves(self):
+        inscriptions = Inscription.objects.filter(classe=self)
+        eleves = [{'idEleve': inscription.eleve.idEleve, 'nom': "{} {}".format(inscription.eleve.nom, inscription.eleve.prenom)} for inscription in inscriptions]
+        return eleves
 
     def __unicode__(self):
         return str(self.idClass)
@@ -247,7 +273,7 @@ class Classe(models.Model):
     def get_groupe_name(self):
         return self
 
-    def save(self):
+    """def save(self):
         # Opening the uploaded image
         im = Image.open(self.logo)
 
@@ -264,7 +290,9 @@ class Classe(models.Model):
         self.logo = InMemoryUploadedFile(output, 'ImageField', "%s.jpg" % self.logo.name.split('.')[0], 'image/jpeg',
                                         sys.getsizeof(output), None)
 
-        super(Classe, self).save()
+        super(Classe, self).save()"""
+
+
 
 class Inscription(models.Model):
     eleve = models.ForeignKey(Eleve, on_delete=models.SET_NULL, null=True)
@@ -349,10 +377,16 @@ class EnseigneA(models.Model):
     enseignant = models.ForeignKey(Enseignant, on_delete=models.SET_NULL, null=True)
     groupe = models.ForeignKey(GroupeDeSoutien, on_delete=models.SET_NULL, null=True)
 
+class EnseigneAClasse(models.Model):
+    enseignant = models.ForeignKey(Enseignant, on_delete=models.SET_NULL, null=True)
+    classe = models.ForeignKey(Classe, on_delete=models.SET_NULL, null=True)
+
 
 class ChapitreClasse(models.Model):
-    contenu = models.TextField(max_length=100000, null=True, blank=True)
-    description = models.TextField(max_length=100000, null=True, blank=True)
+    #idChapitreClasse = models.AutoField(primary_key=True)
+    contenuFichier = models.FileField(upload_to="chapitre/fichier/", null=True, blank=True)
+    contenuVideo = models.FileField(upload_to="chapitre/video/", null=True, blank=True)
+    description = models.TextField(max_length=1000, null=True, blank=True)
     titre = models.CharField(max_length=100000, null=True, blank=True)
     dateDebut = models.DateField(null=True, blank=True)
     dateFin = models.DateField(null=True, blank=True)
@@ -415,7 +449,6 @@ class Question(models.Model):
                 }
                 for proposition in Proposition.objects.filter(question=self)
                 ]
-        print(propositions)
         return propositions
 
 
@@ -510,7 +543,7 @@ class Quizz(models.Model):
     def __str__(self):
         return str(self.idQuizz)
 
-    def get_questions(self):
+    """def get_questions(self):
         questionsList = []
         for quest in self.questions.all():
             propositions = []
@@ -555,9 +588,9 @@ class Quizz(models.Model):
                 "annotationListe": annotationListe
             })
 
-        return questionsList
+        return questionsList"""
 
-    def get_corrections(self):
+    """def get_corrections(self):
         questionsList = []
         for quest in self.questions.all():
             propositions = []
@@ -592,7 +625,7 @@ class Quizz(models.Model):
                 "explication": quest.explication,
                 "propositions": propositions,
             })
-        return questionsList
+        return questionsList"""
 
 class RepondA(models.Model):
     utilisateur = models.ForeignKey(User, related_name="utilisateur_quiz", on_delete=models.SET_NULL, null=True)
