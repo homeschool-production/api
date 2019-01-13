@@ -97,9 +97,13 @@ SESSION_CHOIX = (
     (SESSION2016, "2016"),
 )
 TLEA = "Terminale A"
-TLEB = "Terminale A"
 TLEC = "Terminale C"
 TLED = "Terminale D"
+PREA = "Première A"
+PREC = "Première C"
+PRED = "Première D"
+SNDA = "Seconde A"
+SNDC = "Seconde C"
 TLE = "Terminale"
 PRE = "Première"
 SDE = "Seconde"
@@ -111,6 +115,14 @@ EG = "Enseignement Generale"
 NIVEAU_CHOIX = (
     (TLE, "Terminale"),
     (PRE, "Première"),
+    (TLEA , "Terminale A"),
+    (TLEC , "Terminale C"),
+    (TLED , "Terminale D"),
+    (PREA , "Première A"),
+    (PREC , "Première C"),
+    (PRED , "Première D"),
+    (SNDA , "Seconde A"),
+    (SNDC , "Seconde C"),
     (SDE, "Seconde"),
     (TRO, "Troisième"),
     (QUA, "Quatrième"),
@@ -143,6 +155,8 @@ class Personne(models.Model):
     user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True)
     dateNaissance = models.DateField(auto_now=False, blank=True, null=True)
     lieuNaissance = models.CharField(max_length=128, blank=True, null=True)
+    ville = models.CharField(max_length=128, blank=True, null=True)
+    quartier = models.CharField(max_length=128, blank=True, null=True)
     nom = models.CharField(max_length=128, blank=True, null=True)
     prenom = models.CharField(max_length=128, blank=True, null=True)
     sexe = models.CharField(max_length=50, choices=SEXE, default=MASCULIN)
@@ -236,7 +250,7 @@ class Classe(models.Model):
     idClass = models.AutoField(primary_key=True)
     description = models.TextField(max_length=20000, default="Description de la classe")
     nom = models.CharField(max_length=50, default="Nom de la classe")
-    prix = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(10000000)])
+    prix = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(10000000)], null=True)
     dateDebut = models.DateTimeField(blank=True, null=True)
     dateFin = models.DateTimeField(blank=True, null=True)
     dateFinInscription = models.DateTimeField(blank=True, null=True)
@@ -378,7 +392,7 @@ class EnseigneA(models.Model):
     groupe = models.ForeignKey(GroupeDeSoutien, on_delete=models.SET_NULL, null=True)
 
 class EnseigneAClasse(models.Model):
-    enseignant = models.ForeignKey(Enseignant, on_delete=models.SET_NULL, null=True)
+    enseignant = models.ForeignKey(Enseignant, on_delete=models.SET_NULL, null=True, related_name="enseignants")
     classe = models.ForeignKey(Classe, on_delete=models.SET_NULL, null=True)
 
 

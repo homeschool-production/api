@@ -22,6 +22,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('connexion/', include('api.urls_auth')),
     path('eleve/', include('api.eleve.urls')),
+    path('enseignant/', include('api.enseignant.urls')),
     path('classe/', include('api.classe.urls')),
     path('chapitre/', include('api.chapitre.urls')),
     path('quiz/', include('api.quiz.urls')),

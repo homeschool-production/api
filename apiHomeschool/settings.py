@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 import datetime
+from rest_framework import permissions
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -131,7 +132,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'myMedia')
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
+        'api.jwtclasses.AllowOptionsAuthentication',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
@@ -142,10 +143,15 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend',
     ),
 }
+class MyIsAuthenticated(permissions.IsAuthenticated):
+    def has_permission(self, request, view):
+        if request.method == 'OPTIONS':
+            return True
 
+        return super(MyIsAuthenticated, self).has_permission(request, view)
 JWT_AUTH = {
     'JWT_RESPONSE_PAYLOAD_HANDLER' : 'api.views_account.jwt_response_payload_handler',
     'JWT_EXPIRATION_DELTA': datetime.timedelta(hours=24),  # 3 days
     'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(hours=24),  # 3 days
-    'JWT_ALLOW_REFRESH': True,
+    'JWT_ALLOW_REFRESH': True
 }

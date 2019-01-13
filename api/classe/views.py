@@ -1,6 +1,6 @@
 from rest_framework import generics
 from django.shortcuts import get_object_or_404
-from .serializers import ClasseSerializer
+from .serializers import ClasseSerializer, ClasseListSerializerFilteredEnseignant
 from rest_framework import viewsets
 from rest_framework.response import Response
 from api.models import *
@@ -27,8 +27,13 @@ class ClasseViewSet(viewsets.ModelViewSet):
     def create(self, request):
         serializer = ClasseSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save()
-            return Response({'status': 'Classe creee'})
+            enseignant = Enseignant.objects.filter(user=request.user).first()
+            classe = serializer.save()
+            enseignantA = EnseigneAClasse()
+            enseignantA.classe = classe
+            enseignantA.enseignant = enseignant
+            enseignantA.save()
+            return Response(serializer.data)
         else:
             return Response(serializer.errors,
                             status=400)
@@ -56,3 +61,13 @@ class ClasseListView(generics.ListAPIView):
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = ('nom', 'prix')
     filterset_class = ClasseFilter
+
+
+class ClasseListFilteredView(generics.ListCreateAPIView):
+    queryset = EnseigneAClasse.objects.all()
+    serializer_class = ClasseListSerializerFilteredEnseignant
+    def list(self, request):
+        queryset = self.get_queryset()
+        classes = queryset.filter(enseignant__user=request.user)
+        serializer = ClasseListSerializerFilteredEnseignant(classes, many=True)
+        return Response(serializer.data)
