@@ -3,7 +3,7 @@ from api.models import Question
 
 
 class QuestionSerializer(serializers.ModelSerializer):
-
+    propositions = serializers.ReadOnlyField()
     class Meta:
         model = Question
         fields = '__all__'

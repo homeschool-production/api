@@ -25,9 +25,12 @@ urlpatterns = [
     path('enseignant/', include('api.enseignant.urls')),
     path('classe/', include('api.classe.urls')),
     path('chapitre/', include('api.chapitre.urls')),
+    path('section/', include('api.section.urls')),
     path('quiz/', include('api.quiz.urls')),
     path('question/', include('api.question.urls')),
     path('proposition/', include('api.proposition.urls')),
+    path('propositionschema/', include('api.propositionSchema.urls')),
+    path('devoir/', include('api.devoir.urls')),
     path('propositionROC/', include('api.propositionReponseOuverteCourte.urls')),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

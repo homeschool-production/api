@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from .serializers import PropositionSchemaSerializer
 from rest_framework import viewsets
 from rest_framework.response import Response
-from api.models import PropositionSchema
+from api.models import PropositionSchema, Question
 from django_filters import rest_framework as filters
 from .filters import PropositionSchemaFilter
 
@@ -26,9 +26,15 @@ class PropositionSchemaViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         serializer = PropositionSchemaSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'status': 'PropositionSchema creee'})
+        idQuestion = request.data.get('idQuestion', None)
+        status = 200
+        message = None
+        if serializer.is_valid() and idQuestion:
+            proposition = serializer.save()
+            question = Question.objects.filter(idQuestion=idQuestion).first()
+            proposition.question = question
+            proposition.save()
+            return Response(PropositionSchemaSerializer(proposition, many=False).data)
         else:
             return Response(serializer.errors,
                             status=400)

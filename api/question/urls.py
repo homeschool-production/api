@@ -1,10 +1,11 @@
 from rest_framework.routers import DefaultRouter
-from .views import QuestionListView, QuestionViewSet
+from .views import QuestionListView, QuestionViewSet, QuestionListSelectView
 from django.urls import path, include
 
 
 urlpatterns = [
-    path('list/', QuestionListView.as_view(), name='question-list')
+    path('list/', QuestionListView.as_view(), name='question-list'),
+    path('list_by_selection/', QuestionListView.as_view(), name='question-list-by-selection')
 ]
 
 router = DefaultRouter()

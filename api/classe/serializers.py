@@ -6,6 +6,7 @@ class ClasseSerializer(serializers.ModelSerializer):
 
     enseignants = serializers.ReadOnlyField()
     eleves = serializers.ReadOnlyField()
+    chapitres = serializers.ReadOnlyField()
 
     class Meta:
         model = Classe

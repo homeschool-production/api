@@ -36,3 +36,12 @@ class ChapitreClasseAdmin(admin.ModelAdmin):
     list_display = ('id', 'titre', 'dateDebut', 'dateFin', 'numero')
 
 
+@admin.register(Devoir)
+class DevoirAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Quizz)
+class QuizzAdmin(admin.ModelAdmin):
+    list_display = ('idQuizz', 'dateCreation', 'dateFin', 'createur')
+

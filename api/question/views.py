@@ -3,9 +3,10 @@ from django.shortcuts import get_object_or_404
 from .serializers import QuestionSerializer
 from rest_framework import viewsets
 from rest_framework.response import Response
-from api.models import Question
+from api.models import Question, Section
 from django_filters import rest_framework as filters
 from .filters import QuestionFilter
+import json
 
 
 class QuestionViewSet(viewsets.ModelViewSet):
@@ -25,10 +26,20 @@ class QuestionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def create(self, request):
+        print("hello")
+        print(request.FILES)
+        print(request.data)
         serializer = QuestionSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'status': 'Question creee'})
+        idSection = request.data.get('idSection', None)
+        status = 200
+        message = None
+        if serializer.is_valid() and idSection:
+            section = Section.objects.filter(id=idSection).first()
+            question = serializer.save()
+            question.section = section
+            question.chapitre = section.chapitre
+            question.save()
+            return Response(QuestionSerializer(question, many=False).data)
         else:
             return Response(serializer.errors,
                             status=400)
@@ -56,3 +67,16 @@ class QuestionListView(generics.ListAPIView):
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = ('type', 'session')
     filterset_class = QuestionFilter
+
+#Use when selecting tree
+class QuestionListSelectView(generics.ListAPIView):
+    queryset = Question.objects.all()
+    serializer_class = QuestionSerializer
+    def list(self, request):
+        queryset = self.get_queryset()
+        selectionJson = request.GET.get("selections", None)
+        if selectionJson:
+            selections = json.loads(selectionJson)
+            sectionID = [selection.split(";")[1] for selection in selections]
+            questions = Question.objects.filter(section__id__in=sectionID)
+        return Response(QuestionSerializer(questions, many=True))

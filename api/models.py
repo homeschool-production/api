@@ -278,6 +278,23 @@ class Classe(models.Model):
         eleves = [{'idEleve': inscription.eleve.idEleve, 'nom': "{} {}".format(inscription.eleve.nom, inscription.eleve.prenom)} for inscription in inscriptions]
         return eleves
 
+    @property
+    def chapitres(self):
+        chapitresDB = ChapitreClasse.objects.filter(classe=self)
+        chapitres = []
+        for chapitre in chapitresDB:
+            chapitres.append({
+                'titre': chapitre.titre,
+                'dateDebut': chapitre.dateDebut,
+                'dateFin': chapitre.dateFin,
+                'contenuFichier': chapitre.contenuFichier.url,
+                'contenuVideo': chapitre.contenuVideo.url,
+                'description': chapitre.description,
+                'numero': chapitre.numero,
+                'id': chapitre.id
+            })
+        return chapitres
+
     def __unicode__(self):
         return str(self.idClass)
 
@@ -410,9 +427,43 @@ class ChapitreClasse(models.Model):
     def __str__(self):
         return str(self.titre)
 
+    def sections(self):
+        sectionsDB = Section.objects.filter(chapitre=self)
+        sectionsList = []
+        for section in sectionsDB:
+            sectionsList.append({
+                "intitule": section.intitule,
+                "numero": section.numero,
+                "idSection": section.id
+            })
+        return sectionsList
+
+    def devoirs(self):
+        devoirsDB = Devoir.objects.filter(chapitre=self)
+        devoirsList = []
+        for devoir in devoirsDB:
+            devoirsList.append({
+                "dateDebut": devoir.dateDebut,
+                "dateFin": devoir.dateFin,
+                "duree": devoir.duree,
+                "nombreEssai": devoir.nombreEssai,
+                "id": devoir.id,
+                "titre": devoir.titre,
+            })
+        return devoirsList
+
     class Meta:
         unique_together = (("classe", "numero"),)
 
+
+class Section(models.Model):
+    intitule = models.CharField(max_length=50, default="qcm", blank=True, null=True)
+    chapitre = models.ForeignKey(ChapitreClasse, on_delete=models.SET_NULL, null=True)
+    contenuFichier = models.FileField(upload_to="chapitre/fichier/", null=True, blank=True)
+    contenuVideo = models.FileField(upload_to="chapitre/video/", null=True, blank=True)
+    numero = models.IntegerField(default=1, validators=[MaxValueValidator(25), MinValueValidator(1)])
+    def __str__(self):
+        return "{} | {}".format(self.intitule, self.chapitre.titre)
 
 class Question(models.Model):
     idQuestion = models.AutoField(primary_key=True)
@@ -420,12 +471,14 @@ class Question(models.Model):
     explication = models.TextField(max_length=10001, default="Explication reponse", blank=True, null=True)
     type = models.CharField(max_length=50, choices=TYPE_QUESTION, default="qcm")
     chapitre = models.ForeignKey(ChapitreClasse, on_delete=models.SET_NULL, null=True)
+    section = models.ForeignKey(Section, on_delete=models.SET_NULL, null=True)
     session = models.CharField(max_length=50, choices=SESSION_CHOIX, default=SESSION2010)
     numero = models.IntegerField(blank=True, null=True)
     partie = models.CharField(max_length=50, blank=True, null=True)
     concours = models.CharField(max_length=20, choices=ECOLES_CONCOURS, default="fmsb")
     groupe = models.ForeignKey(GroupeDeSoutien, on_delete=models.SET_NULL, null=True)
     fait = models.BooleanField(default=False)
+    image = models.FileField(upload_to="question/image/", null=True, blank=True)
     def __unicode__(self):
         return str(self.idQuestion)
 
@@ -512,8 +565,8 @@ class PropositionReponseOuverteCourte(models.Model):
 class PropositionSchema(models.Model):
     idPropositionSchema = models.AutoField(primary_key=True)
     numero = models.IntegerField(validators=[MaxValueValidator(30), MinValueValidator(1)])
-    annotation = models.CharField(max_length=1000, default="Annontation", blank=True, null=True)
-    reponse = models.CharField(max_length=1000, default="-", blank=True, null=True)
+    annotation = models.CharField(max_length=100, default="Annontation", blank=True, null=True)
+    reponse = models.CharField(max_length=100, default="-", blank=True, null=True)
     question = models.ForeignKey(Question, on_delete=models.SET_NULL, null=True)
 
     def __unicode__(self):
@@ -521,9 +574,6 @@ class PropositionSchema(models.Model):
 
     def __str__(self):
         return str(self.idPropositionSchema)
-
-    class Meta:
-        app_label = "homeschool"
 
 class QuestionRelationnelle(models.Model):
     idQuestionRelationnelle = models.AutoField(primary_key=True)
@@ -546,6 +596,7 @@ class Quizz(models.Model):
     idQuizz = models.AutoField(primary_key=True)
     consignes = models.TextField(max_length=50, default="Intitule du Quiz", blank=True, null=True)
     dateCreation = models.DateTimeField(auto_now=True, blank=True, null=True)
+    dateFin = models.DateTimeField(blank=True, null=True)
     intitule = models.CharField(max_length=50, default="Intitule du Quiz", blank=True, null=True)
     questions = models.ManyToManyField(Question)
     createur = models.ForeignKey(User, related_name="createur_quiz", on_delete=models.SET_NULL, null=True)
@@ -662,10 +713,10 @@ class Devoir(models.Model):
     quizz = models.ForeignKey(Quizz, on_delete=models.SET_NULL, null=True)
     dateDebut = models.DateField(blank=True, null=True)
     dateFin = models.DateField(blank=True, null=True)
-    duree = models.CharField(default="time", max_length=300)
-    nombreEssai = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(100)])
+    duree = models.CharField(default="time", max_length=300, null=True)
+    nombreEssai = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(100)], null=True)
     classe = models.ForeignKey(Classe, on_delete=models.SET_NULL, null=True)
-    note = models.IntegerField(default=101, validators=[MinValueValidator(1), MaxValueValidator(101)])
+    note = models.IntegerField(default=101, validators=[MinValueValidator(1), MaxValueValidator(101)], null=True)
     correction = models.BooleanField(default=False)
     chapitre = models.ForeignKey(ChapitreClasse, on_delete=models.SET_NULL, null=True)
     consignes = models.TextField(max_length=100000, null=True, blank=True)

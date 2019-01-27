@@ -5,4 +5,4 @@ from api.models import ChapitreClasse
 class ChapitreClasseFilter(filters.FilterSet):
     class Meta:
         model = ChapitreClasse
-        fields = ('titre', 'dateDebut', 'dateFin')
+        fields = ('classe__idClass',)

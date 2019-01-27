@@ -71,3 +71,53 @@ class ClasseListFilteredView(generics.ListCreateAPIView):
         classes = queryset.filter(enseignant__user=request.user)
         serializer = ClasseListSerializerFilteredEnseignant(classes, many=True)
         return Response(serializer.data)
+
+class ClasseListSmallDetail(generics.ListCreateAPIView):
+    queryset = EnseigneAClasse.objects.all()
+    serializer_class = ClasseListSerializerFilteredEnseignant
+    def list(self, request):
+        queryset = self.get_queryset()
+        classes = queryset.filter(enseignant__user=request.user)
+        quasarClasses = []
+        for classeEnseigneA in classes:
+            classe = classeEnseigneA.classe
+            quasarChapitres = []
+            chapitres = ChapitreClasse.objects.filter(classe=classe)
+            for chapitre in chapitres:
+                quasarSections = []
+                sections = Section.objects.filter(chapitre=chapitre)
+                for section in sections:
+                    quasarSections.append({
+                        "label": section.intitule,
+                        "icon": "fas fa-hand-point-right",
+                        "id": "Section;{}".format(section.id)
+                    })
+                quasarChapitres.append({
+                    "label": chapitre.titre,
+                    "id": "Chapitre;{}".format(chapitre.id),
+                    "icon": "fas fa-list-alt",
+                    "children": quasarSections
+                })
+            quasarClasses.append({
+                "label": classe.nom,
+                "id": "Classe;{}".format(classe.idClass),
+                "icon": "fas fa-chalkboard-teacher",
+                "children": quasarChapitres
+            })
+        return Response(quasarClasses)
+
+
+class ClasseListSelect(generics.ListCreateAPIView):
+    queryset = EnseigneAClasse.objects.all()
+    serializer_class = ClasseListSerializerFilteredEnseignant
+    def list(self, request):
+        queryset = self.get_queryset()
+        classes = queryset.filter(enseignant__user=request.user)
+        quasarClasses = []
+        for classeEnseigneA in classes:
+            classe = classeEnseigneA.classe
+            quasarClasses.append({
+                "label": classe.nom,
+                "value": classe.idClass
+            })
+        return Response(quasarClasses)
