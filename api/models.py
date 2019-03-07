@@ -255,7 +255,7 @@ class Classe(models.Model):
     dateFin = models.DateTimeField(blank=True, null=True)
     dateFinInscription = models.DateTimeField(blank=True, null=True)
     enseignant = models.ForeignKey(Enseignant, on_delete=models.SET_NULL, null=True)
-    groupe = models.ForeignKey(GroupeDeSoutien, on_delete=models.SET_NULL, null=True)
+    groupe = models.ForeignKey(GroupeDeSoutien, on_delete=models.SET_NULL, null=True, blank=True)
     facebook = models.URLField(blank=True, null=True)
     twitter = models.URLField(blank=True, null=True)
     logo = models.ImageField(upload_to="logo/", null=True)
@@ -275,8 +275,10 @@ class Classe(models.Model):
     @property
     def eleves(self):
         inscriptions = Inscription.objects.filter(classe=self)
-        eleves = [{'idEleve': inscription.eleve.idEleve, 'nom': "{} {}".format(inscription.eleve.nom, inscription.eleve.prenom)} for inscription in inscriptions]
-        return eleves
+        demandes = DemandeInscription.objects.filter(classe=self)
+        eleves = [{'idEleve': inscription.eleve.idEleve, 'nom': "{} {}".format(inscription.eleve.nom, inscription.eleve.prenom), "inscrit": True} for inscription in inscriptions]
+        eleves_attente = [{'idEleve': demande.eleve.idEleve, 'nom': "{} {}".format(demande.eleve.nom, demande.eleve.prenom), "inscrit": False} for demande in demandes]
+        return eleves + eleves_attente
 
     @property
     def chapitres(self):
@@ -284,6 +286,7 @@ class Classe(models.Model):
         chapitres = []
         for chapitre in chapitresDB:
             chapitres.append({
+                'idClass': self.idClass,
                 'titre': chapitre.titre,
                 'dateDebut': chapitre.dateDebut,
                 'dateFin': chapitre.dateFin,
@@ -328,7 +331,7 @@ class Classe(models.Model):
 class Inscription(models.Model):
     eleve = models.ForeignKey(Eleve, on_delete=models.SET_NULL, null=True)
     classe = models.ForeignKey(Classe, on_delete=models.SET_NULL, null=True)
-    annee = models.DateField(auto_now=False)
+    annee = models.DateField(auto_now=True)
 
     class Meta:
         unique_together = ("eleve", "classe", "annee")
@@ -361,7 +364,7 @@ class ModelDevoirForm(models.Model):
     classe = models.ForeignKey(Classe, on_delete=models.SET_NULL, null=True)
 
 class DemandeInscription(models.Model):
-    eleve = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    eleve = models.ForeignKey(Eleve, on_delete=models.SET_NULL, null=True)
     classe = models.ForeignKey(Classe, on_delete=models.SET_NULL, null=True)
     class Meta:
         unique_together = ("classe", "eleve")
@@ -460,6 +463,7 @@ class Section(models.Model):
     intitule = models.CharField(max_length=50, default="qcm", blank=True, null=True)
     chapitre = models.ForeignKey(ChapitreClasse, on_delete=models.SET_NULL, null=True)
     contenuFichier = models.FileField(upload_to="chapitre/fichier/", null=True, blank=True)
+    contenu = models.TextField(max_length=10001, default="Contenu", blank=True, null=True)
     contenuVideo = models.FileField(upload_to="chapitre/video/", null=True, blank=True)
     numero = models.IntegerField(default=1, validators=[MaxValueValidator(25), MinValueValidator(1)])
     def __str__(self):
@@ -493,7 +497,8 @@ class Question(models.Model):
                     'id': proposition.idPropositionRelationnelle,
                     'enonceA': proposition.enonceA,
                     'enonceB': proposition.enonceB,
-                    "reponse": proposition.reponse
+                    "reponse": proposition.reponse,
+                    'proposition': None,
                 }
                 for proposition in PropositionRelationnelle.objects.filter(question=self)
                 ]
@@ -512,7 +517,7 @@ class Question(models.Model):
                 {
                     'id': proposition.idProposition,
                     'enonce': proposition.enonce,
-                    'checked': False,
+                    'solution': proposition.solution,
                 }
                 for proposition in Proposition.objects.filter(question=self)
                 ]
@@ -719,8 +724,8 @@ class Devoir(models.Model):
     note = models.IntegerField(default=101, validators=[MinValueValidator(1), MaxValueValidator(101)], null=True)
     correction = models.BooleanField(default=False)
     chapitre = models.ForeignKey(ChapitreClasse, on_delete=models.SET_NULL, null=True)
-    consignes = models.TextField(max_length=100000, null=True, blank=True)
-    numeroDesQuestions = models.TextField(max_length=100000, null=True, blank=True)
+    consignes = models.CharField(max_length=1000, null=True, blank=True)
+    numeroDesQuestions = models.CharField(max_length=100, null=True, blank=True)
     titre = models.CharField(max_length=100000, null=True, blank=True)
     def __unicode__(self):
         return self.classe.nom

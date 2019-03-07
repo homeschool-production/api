@@ -28,15 +28,12 @@ class DevoirViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             idChapitre = request.data.get("idChapitre", None)
             idClasse = request.data.get("idClasse", None)
-            idQuizz = request.data.get("idQuizz", None)
-            if idChapitre and idClasse and idQuizz:
+            if idChapitre and idClasse:
                 chapitre = ChapitreClasse.objects.filter(id=idChapitre).first()
                 classe = Classe.objects.filter(idClass=idClasse).first()
-                quiz = Quizz.objects.filter(idQuizz=idQuizz).first()
                 devoir = serializer.save()
                 devoir.chapitre = chapitre
                 devoir.classe = classe
-                devoir.quizz = quiz
                 devoir.save()
             return Response(serializer.data)
         else:

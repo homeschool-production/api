@@ -7,7 +7,7 @@ class EleveSerializer(serializers.ModelSerializer):
     classes = serializers.ReadOnlyField()
     class Meta:
         model = Eleve
-        fields = '__all__'
+        fields = ("nom", "prenom", "dateNaissance", "lieuNaissance", "classes")
         depth = 4
 
     def create(self, validated_data):

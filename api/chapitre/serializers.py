@@ -27,3 +27,16 @@ class ChapitreClasseSerializerDetail(serializers.ModelSerializer):
         chapitre = ChapitreClasse.objects.create(**validated_data)
         chapitre.save()
         return chapitre
+
+class ChapitreClasseMobileSerializer(serializers.ModelSerializer):
+    devoirs = serializers.ReadOnlyField()
+    sections = serializers.ReadOnlyField()
+    class Meta:
+        model = ChapitreClasse
+        fields = ('id', 'titre', 'numero', 'dateDebut', 'dateFin', 'description', 'contenuFichier', 'contenuVideo', '')
+        depth = 4
+
+    def create(self, validated_data):
+        chapitre = ChapitreClasse.objects.create(**validated_data)
+        chapitre.save()
+        return chapitre

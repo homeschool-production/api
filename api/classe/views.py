@@ -1,11 +1,13 @@
 from rest_framework import generics
 from django.shortcuts import get_object_or_404
-from .serializers import ClasseSerializer, ClasseListSerializerFilteredEnseignant
+from .serializers import ClasseSerializer, ClasseListSerializerFilteredEnseignant, ClasseEleveSerializer
 from rest_framework import viewsets
 from rest_framework.response import Response
+from django.http import HttpResponse, JsonResponse
 from api.models import *
 from django_filters import rest_framework as filters
 from .filters import ClasseFilter
+from django.views.decorators.csrf import csrf_exempt
 
 
 class ClasseViewSet(viewsets.ModelViewSet):
@@ -59,7 +61,6 @@ class ClasseListView(generics.ListAPIView):
     serializer_class = ClasseSerializer
     paginate_by = 100
     filter_backends = (filters.DjangoFilterBackend,)
-    filterset_fields = ('nom', 'prix')
     filterset_class = ClasseFilter
 
 
@@ -121,3 +122,30 @@ class ClasseListSelect(generics.ListCreateAPIView):
                 "value": classe.idClass
             })
         return Response(quasarClasses)
+
+
+class ClasseListEleve(generics.ListCreateAPIView):
+    queryset = EnseigneAClasse.objects.all()
+    serializer_class = ClasseEleveSerializer
+    def list(self, request):
+        queryset = self.get_queryset()
+        classes = [eclasse.classe for eclasse in queryset.filter(enseignant__user=request.user)]
+        serializer = ClasseEleveSerializer(classes, many=True)
+        return Response(serializer.data)
+
+@csrf_exempt
+def inscription_cours(request):
+    if request.method == 'POST':
+        username = request.POST.get("username", None)
+        idClasse = request.POST.get("idClasse", None)
+        if idClasse and username:
+            eleve = Eleve.objects.filter(user__username=username).first()
+            classe = Classe.objects.filter(idClass=idClasse).first()
+            inscription = Inscription()
+            inscription.classe = classe
+            inscription.eleve = eleve
+            inscription.save()
+            data = {
+                "message": "inscrition reussie"
+            }
+            return JsonResponse(data)

@@ -41,7 +41,21 @@ class DevoirAdmin(admin.ModelAdmin):
     pass
 
 
+
+@admin.register(DemandeInscription)
+class DemandeInscriptionAdmin(admin.ModelAdmin):
+    pass
+
 @admin.register(Quizz)
 class QuizzAdmin(admin.ModelAdmin):
     list_display = ('idQuizz', 'dateCreation', 'dateFin', 'createur')
 
+
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Section)
+class SectionAdmin(admin.ModelAdmin):
+    pass

@@ -5,4 +5,9 @@ from api.models import Classe
 class ClasseFilter(filters.FilterSet):
     class Meta:
         model = Classe
-        fields = ('nom', 'prix', 'matiere', 'niveau', "enseignant__user__username")
+        fields = {
+            'prix':['lte', 'gte'],
+            'matiere': ['in'],
+            'niveau': ['in'],
+            "enseignant__user__username": ['exact']
+        }
